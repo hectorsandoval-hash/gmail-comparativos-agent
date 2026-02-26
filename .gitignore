@@ -1,0 +1,20 @@
+# Credenciales y tokens (NUNCA subir)
+credentials.json
+token.json
+.env
+
+# Archivos generados
+reportes/
+temp_files/
+logs/
+__pycache__/
+*.pyc
+
+# Archivos locales de Windows Task Scheduler
+ejecutar_7am.bat
+ejecutar_monitoreo.bat
+programar_tareas.py
+
+# IDE
+.vscode/
+.idea/

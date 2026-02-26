@@ -1,0 +1,92 @@
+name: Agente Comparativos Gmail
+
+on:
+  schedule:
+    # Horarios en UTC (Peru = UTC-5)
+    # 7:00 AM Peru = 12:00 UTC
+    - cron: '0 12 * * *'
+    # 11:00 AM Peru = 16:00 UTC
+    - cron: '0 16 * * *'
+    # 3:00 PM Peru = 20:00 UTC
+    - cron: '0 20 * * *'
+    # 7:00 PM Peru = 00:00 UTC (dia siguiente)
+    - cron: '0 0 * * *'
+
+  # Permite ejecutar manualmente desde GitHub
+  workflow_dispatch:
+    inputs:
+      enviar_reporte:
+        description: 'Enviar reporte por correo'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  analisis-comparativos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Restaurar credenciales Google
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS" > credentials.json
+          echo "$GOOGLE_TOKEN" > token.json
+
+      - name: Crear directorios necesarios
+        run: mkdir -p reportes temp_files logs
+
+      - name: Ejecutar analisis y reenvio
+        env:
+          PERSONAS_CLAVE_JSON: ${{ secrets.PERSONAS_CLAVE_JSON }}
+          DESTINATARIOS_CON_FALTANTES: ${{ secrets.DESTINATARIOS_CON_FALTANTES }}
+          DESTINATARIOS_SIN_FALTANTES: ${{ secrets.DESTINATARIOS_SIN_FALTANTES }}
+          USUARIO_NOMBRE: ${{ secrets.USUARIO_NOMBRE }}
+        run: python main.py --reenviar
+
+      - name: Enviar reporte (solo 7AM o manual)
+        if: >
+          github.event.schedule == '0 12 * * *' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.enviar_reporte == 'true')
+        env:
+          PERSONAS_CLAVE_JSON: ${{ secrets.PERSONAS_CLAVE_JSON }}
+          DESTINATARIOS_CON_FALTANTES: ${{ secrets.DESTINATARIOS_CON_FALTANTES }}
+          DESTINATARIOS_SIN_FALTANTES: ${{ secrets.DESTINATARIOS_SIN_FALTANTES }}
+          USUARIO_NOMBRE: ${{ secrets.USUARIO_NOMBRE }}
+        run: python enviar_reporte.py
+
+      - name: Guardar token actualizado
+        if: always()
+        env:
+          GOOGLE_TOKEN_UPDATED: ${{ secrets.GOOGLE_TOKEN }}
+        run: |
+          if [ -f token.json ]; then
+            echo "Token actualizado correctamente"
+          fi
+
+      - name: Guardar reporte como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-${{ github.run_number }}
+          path: |
+            reportes/
+            logs/
+          retention-days: 7

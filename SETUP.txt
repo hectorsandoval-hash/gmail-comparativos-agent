@@ -1,0 +1,81 @@
+================================================================
+  INSTRUCCIONES DE CONFIGURACION - Agente de Comparativos Gmail
+================================================================
+
+PASO 1: INSTALAR PYTHON (si no lo tienes)
+------------------------------------------
+- Descarga Python 3.10+ desde https://www.python.org/downloads/
+- Durante la instalacion marca "Add Python to PATH"
+
+PASO 2: INSTALAR DEPENDENCIAS
+------------------------------
+Abre una terminal en esta carpeta y ejecuta:
+
+  pip install -r requirements.txt
+
+PASO 3: CONFIGURAR GMAIL API (Google Cloud Console)
+-----------------------------------------------------
+3.1  Ve a https://console.cloud.google.com/
+3.2  Crea un nuevo proyecto (o selecciona uno existente)
+3.3  En el menu lateral: APIs y Servicios > Biblioteca
+3.4  Busca "Gmail API" y haz clic en HABILITAR
+3.5  Ve a: APIs y Servicios > Pantalla de consentimiento OAuth
+     - Tipo: Externo (o Interno si es Google Workspace)
+     - Llena nombre de app, email de soporte
+     - En "Scopes" agrega:
+       * https://www.googleapis.com/auth/gmail.readonly
+       * https://www.googleapis.com/auth/gmail.send
+       * https://www.googleapis.com/auth/gmail.modify
+     - En "Test users" agrega tu email de Gmail
+3.6  Ve a: APIs y Servicios > Credenciales
+     - Clic en "+ CREAR CREDENCIALES" > "ID de cliente OAuth"
+     - Tipo: Aplicacion de escritorio
+     - Nombre: "Agente Comparativos" (o cualquiera)
+     - Clic en CREAR
+3.7  Descarga el archivo JSON
+3.8  Renombralo a "credentials.json"
+3.9  Copialo a esta carpeta (gmail-comparativos-agent/)
+
+PASO 4: CONFIGURAR DATOS SENSIBLES (archivo .env)
+-------------------------------------------------------
+Crea un archivo ".env" en esta carpeta con los siguientes datos:
+
+  PERSONAS_CLAVE_JSON={"persona1": {"nombre": "Nombre", "email": "email@empresa.com", "variantes_nombre": ["nombre"]}}
+  DESTINATARIOS_CON_FALTANTES=email1@empresa.com,email2@empresa.com
+  DESTINATARIOS_SIN_FALTANTES=email3@empresa.com
+  USUARIO_NOMBRE=Tu Nombre
+
+Este archivo NO se sube al repositorio (esta en .gitignore).
+En GitHub Actions, estos datos se configuran como Secrets.
+
+PASO 5: EJECUTAR
+-----------------
+  # Solo buscar y listar comparativos (sin reenviar)
+  python main.py
+
+  # Buscar, listar Y reenviar automaticamente
+  python main.py --reenviar
+
+  # Solo buscar (sin seguimiento ni reenvio)
+  python main.py --solo-buscar
+
+  # Limitar busqueda a 20 correos
+  python main.py --max 20
+
+PASO 6: VER REPORTES
+----------------------
+Los reportes se guardan en la carpeta "reportes/":
+  - reporte_comparativos.txt  (formato texto legible)
+  - comparativos_data.json    (formato JSON para procesar)
+
+================================================================
+  NOTAS IMPORTANTES
+================================================================
+- La primera vez que ejecutes, se abrira el navegador para
+  autorizar el acceso a tu Gmail. Esto es normal y seguro.
+- El token se guarda en "token.json" para no pedir autorizacion
+  cada vez.
+- El agente SOLO lee correos y reenvia. No modifica ni borra nada.
+- Para el reenvio, el agente siempre te muestra la lista antes
+  de enviar (a menos que uses --reenviar).
+================================================================
