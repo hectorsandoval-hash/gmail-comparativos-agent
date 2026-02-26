@@ -74,10 +74,9 @@ jobs:
             python main.py
           fi
 
-      - name: Enviar reporte (solo 7AM o manual)
+      - name: Enviar reporte (solo manual)
         if: >
-          github.event.schedule == '0 12 * * *' ||
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.enviar_reporte == 'true')
+          github.event_name == 'workflow_dispatch' && github.event.inputs.enviar_reporte == 'true'
         env:
           PERSONAS_CLAVE_JSON: ${{ secrets.PERSONAS_CLAVE_JSON }}
           DESTINATARIOS_CON_FALTANTES: ${{ secrets.DESTINATARIOS_CON_FALTANTES }}
