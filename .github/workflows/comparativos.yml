@@ -15,6 +15,14 @@ on:
   # Permite ejecutar manualmente desde GitHub
   workflow_dispatch:
     inputs:
+      reenviar:
+        description: 'Reenviar correos a personas faltantes'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
       enviar_reporte:
         description: 'Enviar reporte por correo'
         required: false
@@ -53,13 +61,18 @@ jobs:
       - name: Crear directorios necesarios
         run: mkdir -p reportes temp_files logs
 
-      - name: Ejecutar analisis y reenvio
+      - name: Ejecutar analisis
         env:
           PERSONAS_CLAVE_JSON: ${{ secrets.PERSONAS_CLAVE_JSON }}
           DESTINATARIOS_CON_FALTANTES: ${{ secrets.DESTINATARIOS_CON_FALTANTES }}
           DESTINATARIOS_SIN_FALTANTES: ${{ secrets.DESTINATARIOS_SIN_FALTANTES }}
           USUARIO_NOMBRE: ${{ secrets.USUARIO_NOMBRE }}
-        run: python main.py --reenviar
+        run: |
+          if [ "${{ github.event.inputs.reenviar }}" = "true" ]; then
+            python main.py --reenviar
+          else
+            python main.py
+          fi
 
       - name: Enviar reporte (solo 7AM o manual)
         if: >

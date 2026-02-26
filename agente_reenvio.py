@@ -15,7 +15,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 
-from config import PERSONAS_CLAVE, REPORT_DIR, REENVIADOS_JSON
+from config import PERSONAS_CLAVE, REPORT_DIR, REENVIADOS_JSON, REMITENTES_EXCLUIDOS_REENVIO, ASUNTOS_EXCLUIDOS_REENVIO
 
 
 def _cargar_reenviados():
@@ -60,6 +60,25 @@ def analizar_y_reenviar(service, comparativos, mi_email, auto_reenviar=False):
 
     for comp in comparativos:
         de_email = comp.get("de_email", "").lower()
+        asunto_lower = comp.get("asunto", "").lower()
+
+        # Excluir por remitente
+        if de_email in [r.lower() for r in REMITENTES_EXCLUIDOS_REENVIO]:
+            print(f"  [EXCLUIDO] Remitente excluido ({de_email}): '{comp['asunto'][:50]}'")
+            correos_ok.append(comp)
+            continue
+
+        # Excluir por patron en asunto
+        excluido_asunto = False
+        for patron in ASUNTOS_EXCLUIDOS_REENVIO:
+            if patron in asunto_lower:
+                print(f"  [EXCLUIDO] Asunto excluido ('{patron}'): '{comp['asunto'][:50]}'")
+                correos_ok.append(comp)
+                excluido_asunto = True
+                break
+        if excluido_asunto:
+            continue
+
         faltantes = []
         faltantes_emails = []
 
