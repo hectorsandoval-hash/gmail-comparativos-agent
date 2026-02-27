@@ -208,10 +208,8 @@ def filtrar_comparativos(comparativos, mi_email=""):
     3. Excluir REQUERIMIENTO/REQ que no mencionan comparativo en el cuerpo
     4. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo)
 
-    NOTA: Ya NO se excluyen Fwd: del usuario de forma automatica.
-    Antes se perdia el tracking de correos reenviados por el usuario
-    cuando el hilo original estaba fuera del rango de busqueda.
-    Ahora se usa deduplicacion inteligente: si el original Y el Fwd existen,
+    NOTA: No se excluyen Fwd: del usuario de forma automatica.
+    Se usa deduplicacion inteligente: si el original Y el Fwd existen,
     se queda el original. Si solo existe el Fwd, se mantiene.
     """
     filtrados = []

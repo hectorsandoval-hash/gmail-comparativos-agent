@@ -50,17 +50,17 @@ En GitHub Actions, estos datos se configuran como Secrets.
 
 PASO 5: EJECUTAR
 -----------------
-  # Solo buscar y listar comparativos (sin reenviar)
+  # Ejecutar analisis completo
   python main.py
 
-  # Buscar, listar Y reenviar automaticamente
-  python main.py --reenviar
-
-  # Solo buscar (sin seguimiento ni reenvio)
+  # Solo buscar (sin seguimiento)
   python main.py --solo-buscar
 
   # Limitar busqueda a 20 correos
   python main.py --max 20
+
+  # Enviar reporte por correo
+  python enviar_reporte.py
 
 PASO 6: VER REPORTES
 ----------------------
@@ -75,7 +75,6 @@ Los reportes se guardan en la carpeta "reportes/":
   autorizar el acceso a tu Gmail. Esto es normal y seguro.
 - El token se guarda en "token.json" para no pedir autorizacion
   cada vez.
-- El agente SOLO lee correos y reenvia. No modifica ni borra nada.
-- Para el reenvio, el agente siempre te muestra la lista antes
-  de enviar (a menos que uses --reenviar).
+- El agente SOLO lee correos y envia reportes. No modifica ni
+  borra nada.
 ================================================================

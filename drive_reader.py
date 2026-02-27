@@ -506,7 +506,7 @@ def _extraer_palabras_clave_asunto(asunto):
         return []
 
     texto = asunto.lower()
-    # Quitar prefijos de respuesta/reenvio
+    # Quitar prefijos de respuesta (Re:, Fwd:, etc.)
     texto = re.sub(r"^(re|fwd|rv|fw)\s*:\s*", "", texto, flags=re.IGNORECASE)
     texto = re.sub(r"^(re|fwd|rv|fw)\s*:\s*", "", texto, flags=re.IGNORECASE)  # doble por "Re: Re:"
 
