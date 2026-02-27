@@ -2,35 +2,20 @@ name: Agente Comparativos Gmail
 
 on:
   schedule:
-    # Horarios en UTC (Peru = UTC-5)
-    # 7:00 AM Peru = 12:00 UTC
+    # 7:00 AM Peru = 12:00 UTC — analisis + envio de reporte diario
     - cron: '0 12 * * *'
-    # 11:00 AM Peru = 16:00 UTC
-    - cron: '0 16 * * *'
-    # 3:00 PM Peru = 20:00 UTC
-    - cron: '0 20 * * *'
-    # 7:00 PM Peru = 00:00 UTC (dia siguiente)
-    - cron: '0 0 * * *'
 
   # Permite ejecutar manualmente desde GitHub
   workflow_dispatch:
     inputs:
-      reenviar:
-        description: 'Reenviar correos a personas faltantes'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
       enviar_reporte:
         description: 'Enviar reporte por correo'
         required: false
-        default: 'false'
+        default: 'true'
         type: choice
         options:
-          - 'false'
           - 'true'
+          - 'false'
 
 jobs:
   analisis-comparativos:
@@ -67,16 +52,12 @@ jobs:
           DESTINATARIOS_CON_FALTANTES: ${{ secrets.DESTINATARIOS_CON_FALTANTES }}
           DESTINATARIOS_SIN_FALTANTES: ${{ secrets.DESTINATARIOS_SIN_FALTANTES }}
           USUARIO_NOMBRE: ${{ secrets.USUARIO_NOMBRE }}
-        run: |
-          if [ "${{ github.event.inputs.reenviar }}" = "true" ]; then
-            python main.py --reenviar
-          else
-            python main.py
-          fi
+        run: python main.py
 
-      - name: Enviar reporte (solo manual)
+      - name: Enviar reporte por correo
         if: >
-          github.event_name == 'workflow_dispatch' && github.event.inputs.enviar_reporte == 'true'
+          github.event.schedule == '0 12 * * *' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.enviar_reporte == 'true')
         env:
           PERSONAS_CLAVE_JSON: ${{ secrets.PERSONAS_CLAVE_JSON }}
           DESTINATARIOS_CON_FALTANTES: ${{ secrets.DESTINATARIOS_CON_FALTANTES }}
