@@ -1,14 +1,13 @@
 """
 ORQUESTADOR PRINCIPAL - Agente de Comparativos Gmail
 ====================================================
-Ejecuta los 3 agentes en secuencia:
+Ejecuta los agentes en secuencia:
   1. Busqueda y listado de comparativos
-  2. Verificacion de CC y reenvio
+  2. Verificacion de CC
   3. Seguimiento de respuestas
 
 Uso:
-  python main.py                  # Ejecutar todo (sin reenvio automatico)
-  python main.py --reenviar       # Ejecutar todo CON reenvio automatico
+  python main.py                  # Ejecutar todo
   python main.py --solo-buscar    # Solo buscar y listar
   python main.py --solo-seguir    # Solo seguimiento
 """
@@ -29,7 +28,6 @@ from rich.text import Text
 from config import REPORT_DIR, REPORT_FILE, REPORT_JSON, PERSONAS_CLAVE, MODO_PRUEBA, detectar_obra, USUARIO_NOMBRE
 from auth_gmail import autenticar_gmail, autenticar_drive, autenticar_sheets, obtener_perfil
 from agente_busqueda import buscar_comparativos
-from agente_reenvio import analizar_y_reenviar
 from agente_seguimiento import realizar_seguimiento
 from drive_reader import extraer_datos_comparativo
 from enviar_reporte import filtrar_comparativos
@@ -39,7 +37,6 @@ console = Console()
 
 def main():
     parser = argparse.ArgumentParser(description="Agente de Comparativos - Gmail")
-    parser.add_argument("--reenviar", action="store_true", help="Reenviar automaticamente a personas faltantes")
     parser.add_argument("--solo-buscar", action="store_true", help="Solo ejecutar busqueda")
     parser.add_argument("--solo-seguir", action="store_true", help="Solo ejecutar seguimiento")
     parser.add_argument("--max", type=int, default=100, help="Numero maximo de correos a buscar (default: 100)")
@@ -111,38 +108,21 @@ def main():
     _mostrar_tabla_comparativos(comparativos_reales)
 
     if args.solo_buscar:
-        _guardar_reporte(comparativos_reales, [], [], mi_email)
+        _guardar_reporte(comparativos_reales, [], mi_email)
         console.print("\n[green]Reporte guardado. Ejecuta sin --solo-buscar para ver mas.[/green]")
         return
 
-    # === AGENTE 2: Verificacion y Reenvio (solo comparativos reales) ===
-    console.print("\n[bold yellow]>>> AGENTE 2: VERIFICACION DE CC Y REENVIO[/bold yellow]")
-    if MODO_PRUEBA:
-        console.print("[bold yellow]  [MODO PRUEBA] Reenvio automatico DESACTIVADO. Solo analisis.[/bold yellow]")
-        resultado_reenvio = analizar_y_reenviar(
-            service, comparativos_reales, mi_email, auto_reenviar=False
-        )
-    else:
-        resultado_reenvio = analizar_y_reenviar(
-            service, comparativos_reales, mi_email, auto_reenviar=args.reenviar
-        )
-    _mostrar_tabla_reenvio(resultado_reenvio)
-
-    if args.solo_seguir:
-        pass  # Continuar al seguimiento
-
-    # === AGENTE 3: Seguimiento (solo comparativos reales) ===
+    # === AGENTE 2: Seguimiento (solo comparativos reales) ===
     console.print("\n[bold yellow]>>> AGENTE 3: SEGUIMIENTO DE RESPUESTAS[/bold yellow]")
     seguimiento = realizar_seguimiento(service, comparativos_reales, mi_email)
     _mostrar_tabla_seguimiento(seguimiento)
 
     # Guardar reporte
-    _guardar_reporte(comparativos_reales, resultado_reenvio, seguimiento, mi_email)
+    _guardar_reporte(comparativos_reales, seguimiento, mi_email)
 
     console.print(Panel.fit(
         "[bold green]PROCESO COMPLETADO[/bold green]\n"
         f"Comparativos encontrados: {len(comparativos)}\n"
-        f"Reenvios necesarios: {len(resultado_reenvio.get('correos_sin_copia', []))}\n"
         f"Reporte guardado en: {REPORT_DIR}",
         border_style="green",
     ))
@@ -178,37 +158,6 @@ def _mostrar_tabla_comparativos(comparativos):
             comp["monto"],
             *_personas_status,
             comp["resumen"][:40] + "..." if len(comp["resumen"]) > 40 else comp["resumen"],
-        )
-
-    console.print(table)
-
-
-def _mostrar_tabla_reenvio(resultado):
-    """Muestra tabla de correos que necesitan reenvio."""
-    sin_copia = resultado.get("correos_sin_copia", [])
-    if not sin_copia:
-        console.print("[green]  Todos los comparativos ya tienen a las personas clave en copia.[/green]")
-        return
-
-    table = Table(title="CORREOS QUE NECESITAN REENVIO", show_lines=True)
-    table.add_column("#", style="cyan", width=4)
-    table.add_column("Asunto", style="bold white", max_width=40)
-    table.add_column("Faltantes", style="red", max_width=30)
-    table.add_column("Estado", style="yellow", width=15)
-
-    for i, item in enumerate(sin_copia, 1):
-        reenvio = next(
-            (r for r in resultado.get("resultados_reenvio", []) if r["id"] == item["comparativo"]["id"]),
-            None,
-        )
-        estado = reenvio["estado"] if reenvio else "PENDIENTE"
-        color = "green" if estado == "ENVIADO" else "yellow" if estado == "PENDIENTE" else "red"
-
-        table.add_row(
-            str(i),
-            item["comparativo"]["asunto"][:40],
-            ", ".join(item["faltantes"]),
-            f"[{color}]{estado}[/{color}]",
         )
 
     console.print(table)
@@ -257,7 +206,7 @@ def _mostrar_tabla_seguimiento(seguimiento):
     console.print(table)
 
 
-def _guardar_reporte(comparativos, resultado_reenvio, seguimiento, mi_email):
+def _guardar_reporte(comparativos, seguimiento, mi_email):
     """Guarda los resultados en archivos de reporte."""
     os.makedirs(REPORT_DIR, exist_ok=True)
 

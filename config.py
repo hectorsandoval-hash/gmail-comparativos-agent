@@ -91,25 +91,6 @@ REPORT_DIR = os.path.join(BASE_DIR, "reportes")
 REPORT_FILE = os.path.join(REPORT_DIR, "reporte_comparativos.txt")
 REPORT_JSON = os.path.join(REPORT_DIR, "comparativos_data.json")
 
-# Archivo de tracking de reenvios (evita duplicados)
-REENVIADOS_JSON = os.path.join(REPORT_DIR, "reenviados.json")
-
-# ============================================================
-# EXCLUSIONES DE REENVIO
-# Correos de estos remitentes NUNCA se reenvian a nadie
-# Correos con estos patrones en asunto NUNCA se reenvian
-# ============================================================
-REMITENTES_EXCLUIDOS_REENVIO = [
-    "alicia.conde@hergonsa.pe",
-]
-
-ASUNTOS_EXCLUIDOS_REENVIO = [
-    "costo pll staff",
-    "fases para cierre de mes",
-    "cierre de mes",
-    "renovación obra",
-    "renovacion obra",
-]
 
 # ============================================================
 # OBRAS / PROYECTOS
