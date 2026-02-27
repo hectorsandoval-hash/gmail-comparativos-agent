@@ -20,6 +20,13 @@ PERU_TZ = timezone(timedelta(hours=-5))
 from auth_gmail import autenticar_gmail, obtener_perfil
 from config import REPORT_JSON, MODO_PRUEBA, detectar_obra, OBRAS, PERSONAS_CLAVE, USUARIO_NOMBRE
 
+# Remitentes cuyos correos se ignoran completamente en el analisis
+EXCLUIR_REMITENTES = [
+    "alicia.conde@hergonsa.pe",
+    "recursoshumanos@hergonsa.pe",
+    "asistentecontable2@hergonsa.pe",
+]
+
 # Palabras en asunto que indican que NO es un comparativo real
 EXCLUIR_ASUNTOS = [
     "valorizacion",
@@ -176,9 +183,10 @@ def filtrar_comparativos(comparativos, mi_email=""):
     """Filtra correos que no son comparativos reales.
 
     Pasos:
-    1. Excluir por palabras clave en asunto (EXCLUIR_ASUNTOS)
-    2. Excluir REQUERIMIENTO/REQ que no mencionan comparativo en el cuerpo
-    3. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo)
+    1. Excluir por remitente (EXCLUIR_REMITENTES)
+    2. Excluir por palabras clave en asunto (EXCLUIR_ASUNTOS)
+    3. Excluir REQUERIMIENTO/REQ que no mencionan comparativo en el cuerpo
+    4. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo)
 
     NOTA: Ya NO se excluyen Fwd: del usuario de forma automatica.
     Antes se perdia el tracking de correos reenviados por el usuario
@@ -194,13 +202,21 @@ def filtrar_comparativos(comparativos, mi_email=""):
 
         es_excluido = False
 
-        # 1. Excluir por palabras clave en asunto
-        for palabra in EXCLUIR_ASUNTOS:
-            if palabra in asunto_lower:
+        # 1. Excluir por remitente
+        de_email_lower = comp.get("de_email", "").lower()
+        for remitente in EXCLUIR_REMITENTES:
+            if remitente.lower() == de_email_lower:
                 es_excluido = True
                 break
 
-        # 2. Excluir REQUERIMIENTO/REQ que no son comparativos (solo logistica)
+        # 2. Excluir por palabras clave en asunto
+        if not es_excluido:
+            for palabra in EXCLUIR_ASUNTOS:
+                if palabra in asunto_lower:
+                    es_excluido = True
+                    break
+
+        # 3. Excluir REQUERIMIENTO/REQ que no son comparativos (solo logistica)
         if not es_excluido and _es_req_sin_comparativo(comp):
             es_excluido = True
 
