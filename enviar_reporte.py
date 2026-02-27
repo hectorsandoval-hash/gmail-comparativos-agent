@@ -50,6 +50,12 @@ EXCLUIR_ASUNTOS = [
     "informacion sub contratista",
     "información sub contratista",
     "sub contratista",
+    # Correos administrativos que no son comparativos
+    "fases para cierre de mes",
+    "cierre de mes",
+    "costo pll staff",
+    "renovación obra",
+    "renovacion obra",
 ]
 
 # Palabras en asunto que requieren revision del cuerpo para confirmar
