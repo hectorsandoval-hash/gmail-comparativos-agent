@@ -56,6 +56,20 @@ EXCLUIR_ASUNTOS = [
     "costo pll staff",
     "renovación obra",
     "renovacion obra",
+    # RRHH / planillas / personal
+    "ingreso personal",
+    "ingreso de personal",
+    "sueldo",
+    "sueldos",
+    "planilla",
+    "planillas",
+    "staff",
+    "pll",
+    "remuneracion",
+    "remuneración",
+    "boleta de pago",
+    "liquidacion",
+    "liquidación",
 ]
 
 # Palabras en asunto que requieren revision del cuerpo para confirmar
