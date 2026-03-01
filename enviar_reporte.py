@@ -88,20 +88,16 @@ EXCLUIR_ASUNTOS = [
 PALABRAS_REQ = ["requerimiento", "requerimientos"]
 
 # Palabras en el cuerpo que confirman que un REQ SI es un comparativo real
-# Lista amplia: incluye terminos de cotizaciones, presupuestos, proveedores, etc.
+# Solo incluye terminos ESPECIFICOS de comparativos/revision/aprobacion.
+# Palabras genericas como "proveedor", "adjunto", "monto", "precio" se
+# eliminaron porque aparecen en cualquier correo de procura/logistica.
 PALABRAS_CONFIRMA_COMPARATIVO = [
     "comparativo", "cuadro comparativo", "c.c.", "cc.",
     "revisión", "revision", "revisar",
     "aprobación", "aprobacion", "aprobar",
     "evaluar", "analizar", "analisis", "análisis",
     "cotización", "cotizacion", "cotizaciones",
-    "presupuesto", "presupuestos",
-    "proveedor", "proveedores",
-    "cuadro", "monto", "montos",
-    "adjunto", "adjuntos", "adjuntamos",
-    "propuesta", "propuestas",
-    "precio", "precios",
-    "suministro", "instalación", "instalacion",
+    "cuadro",
 ]
 
 # Destinatarios adicionales (se leen de variables de entorno / GitHub Secrets)
@@ -209,6 +205,64 @@ def _deduplicar_comparativos(comparativos):
     return unicos
 
 
+def _asunto_tiene_termino_comparativo(asunto):
+    """Verifica si el asunto contiene terminos que indican que es un comparativo.
+
+    Terminos: "comparativo", "comparativos", "compartivo" (typo comun),
+    "c.c.", y "CC"/"CC."/"CC:" como abreviatura de Cuadro Comparativo.
+    """
+    asunto_lower = asunto.lower()
+
+    # Terminos directos
+    for termino in ["comparativo", "comparativos", "compartivo", "c.c."]:
+        if termino in asunto_lower:
+            return True
+
+    # "CC" como abreviatura de Cuadro Comparativo
+    # Puede aparecer al inicio (despues de Re:/Fwd:) o despues de "/ " o "- "
+    asunto_norm = re.sub(r'^(fwd:\s*|re:\s*|rv:\s*)+', '', asunto_lower).strip()
+    if re.search(r'(?:^|[/\-]\s*)cc[\s.:]', asunto_norm):
+        return True
+
+    return False
+
+
+def _es_cc_only_no_comparativo(comp, mi_email):
+    """Verifica si el usuario esta solo en CC (no en TO) y el correo NO es
+    un comparativo para su area.
+
+    Si el usuario esta solo en CC y el asunto no contiene terminos de
+    comparativo (CC., comparativo, c.c.), es probable que el correo
+    sea de otra area y el usuario solo esta copiado para informacion.
+
+    Aplica solo a correos tipo REQ/REQUERIMIENTO/COTIZACION REQ.
+    """
+    if not mi_email:
+        return False
+
+    # Verificar si el usuario esta en TO (no solo en CC)
+    para = comp.get("para", "").lower()
+    if mi_email.lower() in para:
+        return False  # Esta en TO → es para el usuario → NO excluir
+
+    # El usuario esta solo en CC. Verificar si tiene termino de comparativo
+    if _asunto_tiene_termino_comparativo(comp["asunto"]):
+        return False  # Tiene termino de comparativo → es de su area → NO excluir
+
+    # Solo en CC y sin termino de comparativo:
+    # Verificar si el asunto es un REQ/REQUERIMIENTO/COTIZACION REQ
+    asunto_lower = comp["asunto"].lower()
+    tiene_req = any(p in asunto_lower for p in PALABRAS_REQ)
+    if not tiene_req:
+        tiene_req = bool(re.search(r'(?:^|\s|-)req(?:\s|\.|\d|$)', asunto_lower))
+    tiene_cotizacion_req = "cotizacion req" in asunto_lower or "cotización req" in asunto_lower
+
+    if tiene_req or tiene_cotizacion_req:
+        return True  # CC-only + REQ sin comparativo → EXCLUIR
+
+    return False
+
+
 def filtrar_comparativos(comparativos, mi_email=""):
     """Filtra correos que no son comparativos reales.
 
@@ -216,7 +270,9 @@ def filtrar_comparativos(comparativos, mi_email=""):
     1. Excluir por remitente (EXCLUIR_REMITENTES)
     2. Excluir por palabras clave en asunto (EXCLUIR_ASUNTOS)
     3. Excluir REQUERIMIENTO/REQ que no mencionan comparativo en el cuerpo
-    4. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo)
+    4. Excluir correos donde el usuario esta solo en CC y es un REQ/COTIZACION
+       sin terminos de comparativo (no es de su area)
+    5. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo)
 
     NOTA: No se excluyen Fwd: del usuario de forma automatica.
     Se usa deduplicacion inteligente: si el original Y el Fwd existen,
@@ -248,12 +304,16 @@ def filtrar_comparativos(comparativos, mi_email=""):
         if not es_excluido and _es_req_sin_comparativo(comp):
             es_excluido = True
 
+        # 4. Excluir correos donde usuario esta solo en CC y es REQ sin comparativo
+        if not es_excluido and _es_cc_only_no_comparativo(comp, mi_email):
+            es_excluido = True
+
         if es_excluido:
             excluidos.append(comp)
         else:
             filtrados.append(comp)
 
-    # 3. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo → queda 1)
+    # 5. Deduplicar por asunto normalizado (Fwd:/Re: del mismo correo → queda 1)
     filtrados = _deduplicar_comparativos(filtrados)
 
     return filtrados, excluidos

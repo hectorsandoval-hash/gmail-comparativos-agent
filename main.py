@@ -226,6 +226,7 @@ def _guardar_reporte(comparativos, seguimiento, mi_email):
             "asunto": comp["asunto"],
             "de": comp["de"],
             "de_email": comp.get("de_email", ""),
+            "para": comp.get("para", ""),
             "fecha": comp["fecha"],
             "monto": comp["monto"],
             "ppto_meta_hg": comp.get("ppto_meta_hg", "No especificado"),
