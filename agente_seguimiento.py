@@ -1,9 +1,10 @@
 """
 AGENTE 3: Seguimiento de Comparativos
 - Revisa cada thread/hilo de los comparativos
-- Verifica si el ULTIMO mensaje que requiere un nuevo analisis fue respondido
+- ANTES de que el equipo responda: cualquier mensaje externo requiere respuesta
+- DESPUES de que el equipo responda: el hilo se considera CERRADO
+  Solo se reabre si el remitente solicita explicitamente un NUEVO analisis o postores
 - Mensajes de traslado, OC, confirmaciones NO cuentan como pendientes
-- Solo mensajes que solicitan revision/analisis cuentan como pendientes
 """
 import base64
 import re
@@ -14,6 +15,35 @@ from config import PERSONAS_CLAVE, PALABRAS_NO_REQUIERE_RESPUESTA, USUARIO_NOMBR
 
 # Emails conocidos de personas tracked
 _EMAILS_TRACKED = set()
+
+# Palabras que indican que el remitente solicita un NUEVO analisis/postores
+# (solo aplica DESPUES de que el equipo ya respondio — reabre el hilo)
+PALABRAS_SOLICITA_NUEVO_ANALISIS = [
+    # Solicitudes explicitas de nuevo analisis
+    "nuevo comparativo", "nuevos comparativos",
+    "nuevo análisis", "nuevo analisis",
+    "nuevos postores", "nuevo postor",
+    "nuevas cotizaciones", "nueva cotización", "nueva cotizacion",
+    "actualizar comparativo", "actualizar el comparativo",
+    "revisar nuevamente", "volver a revisar",
+    "nueva propuesta", "nuevas propuestas",
+    "recotizar", "re-cotizar",
+    "incluir nuevo proveedor", "agregar postor",
+    "ampliar comparativo",
+    "solicito nuevo", "solicito nueva",
+    "requiero nuevo", "requiero nueva",
+    "favor de actualizar", "favor actualizar",
+    "necesito nuevo", "necesito nueva",
+    # Envio de cotizaciones actualizadas que ameritan nuevo analisis
+    "cotizaciones actualizadas", "cotización actualizada", "cotizacion actualizada",
+    "precios actualizados", "precio actualizado",
+    "propuesta actualizada", "propuestas actualizadas",
+    "adjunto cotización", "adjunto cotizacion",
+    "adjunto nueva", "adjunto nuevo",
+    "se adjunta cotización", "se adjunta cotizacion",
+    "envio cotización", "envio cotizacion",
+    "envío cotización", "envío cotizacion",
+]
 
 
 def realizar_seguimiento(service, comparativos, mi_email):
@@ -96,6 +126,8 @@ def _analizar_thread(service, thread_id, comparativo, mi_email):
     ultimo_requiere_idx = -1
     # Indice del ultimo mensaje de tracked que responde
     ultimo_tracked_idx = -1
+    # Flag: alguien del equipo ya respondio en algun punto del hilo
+    alguno_tracked_respondio = False
 
     for idx, msg in enumerate(mensajes):
         headers = {h["name"].lower(): h["value"] for h in msg.get("payload", {}).get("headers", [])}
@@ -127,11 +159,20 @@ def _analizar_thread(service, thread_id, comparativo, mi_email):
 
         if es_tracked:
             ultimo_tracked_idx = idx
+            alguno_tracked_respondio = True
         else:
-            # Mensaje de alguien externo - clasificar si requiere respuesta
-            if _mensaje_requiere_respuesta(snippet, asunto):
-                ultimo_requiere_idx = idx
-            # Si es traslado/OC/confirmacion, NO cuenta como pendiente
+            # Mensaje de alguien externo
+            if alguno_tracked_respondio:
+                # DESPUES de que el equipo respondio:
+                # El hilo se considera CERRADO por defecto.
+                # Solo reabre si el remitente pide NUEVO analisis/postores.
+                if _mensaje_solicita_nuevo_analisis(snippet, asunto):
+                    ultimo_requiere_idx = idx
+            else:
+                # ANTES de que nadie del equipo responda:
+                # Cualquier mensaje externo que no sea cierre = requiere respuesta
+                if _mensaje_requiere_respuesta(snippet, asunto):
+                    ultimo_requiere_idx = idx
 
     # Determinar estado
     if total_mensajes <= 1:
@@ -182,17 +223,12 @@ def _analizar_thread(service, thread_id, comparativo, mi_email):
 
 def _mensaje_requiere_respuesta(snippet, asunto):
     """
-    Determina si un mensaje requiere una nueva respuesta/revision.
+    Determina si un mensaje externo (ANTES de que el equipo responda)
+    requiere una respuesta.
 
-    NO requiere respuesta (es confirmacion/traslado):
-    - "de acuerdo", "ok", "proceder", "aprobado"
-    - "generar OC", "orden de compra", "adjunto OC"
-    - "se traslada", "traslado"
-
-    SI requiere respuesta (nuevo analisis):
-    - "adjunto comparativo", "cuadro comparativo"
-    - "revision", "evaluar", "analizar"
-    - Tiene adjuntos Excel nuevos
+    Se usa solo para mensajes que llegan ANTES de que alguien del equipo
+    haya respondido en el hilo. Por defecto = SI requiere respuesta,
+    a menos que sea confirmacion/traslado/OC.
     """
     texto = (snippet + " " + asunto).lower()
 
@@ -204,3 +240,22 @@ def _mensaje_requiere_respuesta(snippet, asunto):
     # Si llego aqui, por defecto SI requiere respuesta
     # (es un mensaje nuevo de alguien externo que no es confirmacion)
     return True
+
+
+def _mensaje_solicita_nuevo_analisis(snippet, asunto):
+    """
+    Determina si un mensaje externo (DESPUES de que el equipo respondio)
+    solicita explicitamente un NUEVO analisis o nuevos postores.
+
+    Se usa solo para mensajes que llegan DESPUES de que alguien del equipo
+    ya respondio. Por defecto = NO reabre el hilo (se considera cerrado).
+    Solo reabre si el remitente pide algo nuevo explicitamente.
+    """
+    texto = (snippet + " " + asunto).lower()
+
+    for palabra in PALABRAS_SOLICITA_NUEVO_ANALISIS:
+        if palabra in texto:
+            return True
+
+    # Por defecto NO reabre: el equipo ya respondio, el hilo esta cerrado
+    return False
