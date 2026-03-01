@@ -17,16 +17,15 @@ from datetime import datetime, timezone, timedelta
 # Zona horaria Peru (UTC-5)
 PERU_TZ = timezone(timedelta(hours=-5))
 
+import os
+
 from auth_gmail import autenticar_gmail, obtener_perfil
 from config import REPORT_JSON, MODO_PRUEBA, detectar_obra, OBRAS, PERSONAS_CLAVE, USUARIO_NOMBRE
 
 # Remitentes cuyos correos se ignoran completamente en el analisis
-EXCLUIR_REMITENTES = [
-    "alicia.conde@hergonsa.pe",
-    "recursoshumanos@hergonsa.pe",
-    "asistentecontable2@hergonsa.pe",
-    "gemini-notes@google.com",
-]
+# Se leen de variable de entorno EXCLUIR_REMITENTES_JSON (GitHub Secret)
+_excluir_json = os.environ.get("EXCLUIR_REMITENTES_JSON", "")
+EXCLUIR_REMITENTES = json.loads(_excluir_json) if _excluir_json else []
 
 # Palabras en asunto que indican que NO es un comparativo real
 EXCLUIR_ASUNTOS = [
