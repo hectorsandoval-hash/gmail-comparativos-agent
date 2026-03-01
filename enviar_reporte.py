@@ -25,6 +25,7 @@ EXCLUIR_REMITENTES = [
     "alicia.conde@hergonsa.pe",
     "recursoshumanos@hergonsa.pe",
     "asistentecontable2@hergonsa.pe",
+    "gemini-notes@google.com",
 ]
 
 # Palabras en asunto que indican que NO es un comparativo real
@@ -70,6 +71,15 @@ EXCLUIR_ASUNTOS = [
     "boleta de pago",
     "liquidacion",
     "liquidación",
+    # Oficios, invitaciones y documentos administrativos
+    "oficio",
+    "invitación proceso",
+    "invitacion proceso",
+    # Notas de reuniones (Google Meet / Gemini)
+    "notas:",
+    "notas de",
+    # Correos internos que no son comparativos
+    "vgu",
 ]
 
 # Palabras en asunto que requieren revision del cuerpo para confirmar

@@ -60,17 +60,34 @@ PERSONAS_CLAVE = json.loads(_personas_json) if _personas_json else {}
 # Palabras que indican que un mensaje NO requiere nueva respuesta
 # (son confirmaciones, traslados, generacion de OC, creacion de ordenes, etc.)
 PALABRAS_NO_REQUIERE_RESPUESTA = [
+    # Confirmaciones y aprobaciones
     "de acuerdo", "ok", "conforme", "aprobado", "aprobada",
-    "proceder", "procedemos", "se procede",
+    "proceder", "procedemos", "se procede", "se procederá", "se procedera",
+    "proceder con la orden", "proceder con la oc",
+    "doy por cerrado", "doy por atendido", "queda cerrado", "queda atendido",
+    "perfecto", "excelente",
+    # Generacion de OC / ordenes de compra
     "generar oc", "orden de compra", "se adjunta oc", "envio de oc",
     "se genero", "se generó", "se emitió", "se emitio",
     "adjunto oc", "oc aprobada", "oc generada",
-    "trasladar", "traslado", "se traslada",
-    # Creacion de ordenes (NO es observacion ni actualizacion del comparativo)
+    "se actualizó la oc", "se actualizo la oc",
+    "se modificó la orden", "se modifico la orden",
+    # Creacion de ordenes
     "nueva orden", "se creó la orden", "se creo la orden",
     "se creó una orden", "se creo una orden", "se creó una nueva orden",
     "se creo una nueva orden", "orden creada", "orden de compra creada",
     "se genero la orden", "se generó la orden",
+    # Traslados
+    "trasladar", "traslado", "se traslada",
+    # Generacion de codigos (sistema HAFQA u otros)
+    "cod. generado", "codigo generado", "código generado",
+    "cod generado", "creacion de codigos", "creación de códigos",
+    # Acciones que indican que el comparativo ya fue procesado
+    "generar la oc", "autorizo la compra", "autorizado",
+    "su aprobación para", "su aprobacion para",
+    "ingresar con estos frentes",
+    "se confirma", "me confirma si se",
+    "por cerrado de parte", "cerrado de parte",
 ]
 
 # Palabras clave para buscar comparativos y cotizaciones
