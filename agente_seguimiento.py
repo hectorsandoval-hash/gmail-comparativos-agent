@@ -8,7 +8,7 @@ AGENTE 3: Seguimiento de Comparativos
 """
 import base64
 import re
-from email.utils import parseaddr
+from email.utils import parseaddr, getaddresses
 
 from config import PERSONAS_CLAVE, PALABRAS_NO_REQUIERE_RESPUESTA, USUARIO_NOMBRE
 
@@ -143,23 +143,45 @@ def _analizar_thread(service, thread_id, comparativo, mi_email):
         es_tracked = False
 
         # Verificar si es del usuario
-        if from_email == mi_email.lower():
+        es_yo = from_email == mi_email.lower()
+        if es_yo:
             es_tracked = True
-            respuestas["yo"]["respondio"] = True
-            respuestas["yo"]["fecha_respuesta"] = fecha
 
         # Verificar personas clave
+        personas_match = []
         for key, persona in PERSONAS_CLAVE.items():
             for variante in persona["variantes_nombre"]:
                 if variante in from_name or variante in from_email:
                     es_tracked = True
-                    respuestas[key]["respondio"] = True
-                    respuestas[key]["fecha_respuesta"] = fecha
+                    personas_match.append(key)
                     break
 
         if es_tracked:
-            ultimo_tracked_idx = idx
-            alguno_tracked_respondio = True
+            # Distinguir RESPUESTA REAL vs REENVIO INTERNO:
+            # Solo cuenta como "respondio" si el mensaje va dirigido a
+            # alguien FUERA del equipo (remitente original u otro externo).
+            # Si solo va a personas del equipo → es reenvio interno → no cuenta.
+            to_header = headers.get("to", "")
+            cc_header = headers.get("cc", "")
+            destinatarios = getaddresses([to_header, cc_header])
+            emails_dest = {addr.lower() for _, addr in destinatarios if addr}
+
+            es_respuesta_externa = any(
+                e not in _EMAILS_TRACKED for e in emails_dest if e
+            )
+
+            if es_respuesta_externa:
+                # Respuesta real al remitente → cuenta como respondio
+                if es_yo:
+                    respuestas["yo"]["respondio"] = True
+                    respuestas["yo"]["fecha_respuesta"] = fecha
+                for key in personas_match:
+                    respuestas[key]["respondio"] = True
+                    respuestas[key]["fecha_respuesta"] = fecha
+
+                ultimo_tracked_idx = idx
+                alguno_tracked_respondio = True
+            # Si solo va a personas del equipo → reenvio interno, NO cuenta
         else:
             # Mensaje de alguien externo
             if alguno_tracked_respondio:
