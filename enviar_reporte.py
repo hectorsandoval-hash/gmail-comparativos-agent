@@ -79,6 +79,27 @@ EXCLUIR_ASUNTOS = [
     "notas de",
     # Correos internos que no son comparativos
     "vgu",
+    # Facturas y pagos (no son comparativos)
+    "facturas vencidas",
+    "facturas por vencer",
+    "deudas pendientes",
+    # Reportes administrativos
+    "reporte hh",
+    # Autorizacion de personal
+    "autorizacion de personal",
+    "autorización de personal",
+    # Envio de OC (ya no es revision de comparativo)
+    "envio oc",
+    "envío oc",
+    # Informes y fichas tecnicas
+    "presentacion de ficha",
+    "presentación de ficha",
+    # Equipamiento y muestras (no son comparativos)
+    "equipamiento tecnologico",
+    "equipamiento tecnológico",
+    "recojo de muestras",
+    # Pagos y OC existentes (tramite, no comparativo)
+    "cema ",
 ]
 
 # Palabras en asunto que requieren revision del cuerpo para confirmar
