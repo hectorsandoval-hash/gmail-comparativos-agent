@@ -203,11 +203,14 @@ def _es_req_sin_comparativo(comp):
 
 
 def _normalizar_asunto(asunto):
-    """Normaliza un asunto removiendo prefijos Fwd:/Re:/RE: para deduplicacion.
+    """Normaliza un asunto removiendo prefijos Fwd:/Re:/RE:/RV: para deduplicacion.
+
+    RV: es el prefijo de Outlook en espanol para reenvios (equivalente a Fwd:).
 
     Ejemplo: 'Fwd: Re: CC. BEETHOVEN TR4' → 'cc. beethoven tr4'
+    Ejemplo: 'RV: SE REMITE CUADRO COMPARATIVO' → 'se remite cuadro comparativo'
     """
-    return re.sub(r'^(fwd:\s*|re:\s*)+', '', asunto.strip(), flags=re.IGNORECASE).strip().lower()
+    return re.sub(r'^(fwd:\s*|re:\s*|rv:\s*)+', '', asunto.strip(), flags=re.IGNORECASE).strip().lower()
 
 
 def _deduplicar_comparativos(comparativos):
