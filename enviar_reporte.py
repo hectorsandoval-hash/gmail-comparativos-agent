@@ -100,6 +100,33 @@ EXCLUIR_ASUNTOS = [
     "recojo de muestras",
     # Pagos y OC existentes (tramite, no comparativo)
     "cema ",
+    # Proyectados y valorizaciones
+    "proyectado marzo",
+    "proyectado febrero",
+    "proyectado enero",
+    "proyectado abril",
+    "proyectado mayo",
+    "proyectado junio",
+    "val proyectada",
+    "val semanal",
+    "modelo de val",
+    "conformidad supervision",
+    "conformidad supervisión",
+    # Documentos de procura (entrega de carpetas, no comparativo)
+    "documentos de procura",
+    # Combustible (no es comparativo)
+    "combustible",
+    # OC ya generadas o aprobaciones de compra (tramite cerrado)
+    "oc de proyector",
+    "generar oc",
+    "aprobacion de compra",
+    "aprobación de compra",
+    "oc generada",
+    # Tableros electricos / envio de RQ (requerimiento, no comparativo)
+    "tablero electricos",
+    "tableros electricos",
+    # Cortes y cuadros internos de OC/cotizaciones
+    "oc si/no",
 ]
 
 # Palabras en asunto que requieren revision del cuerpo para confirmar
