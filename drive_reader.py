@@ -603,6 +603,18 @@ def _leer_carpeta_drive(drive_service, sheets_service, folder_id, asunto=""):
             bigrams.append(f"{palabras_clave[i]}-{palabras_clave[i+1]}")
             bigrams.append(f"{palabras_clave[i]}{palabras_clave[i+1]}")
 
+        # Generar raices de keywords para matching flexible
+        # "electricas" → "electr", "luminarias" → "luminar", etc.
+        _SUFIJOS_ES = ["icas", "icos", "ias", "ios", "as", "os", "es", "ión", "ion"]
+        raices = {}
+        for p in palabras_clave:
+            raiz = p
+            for suf in sorted(_SUFIJOS_ES, key=len, reverse=True):
+                if p.endswith(suf) and len(p) - len(suf) >= 4:
+                    raiz = p[:-len(suf)]
+                    break
+            raices[p] = raiz
+
         # Calcular score de match para cada archivo (keywords raras valen mas)
         archivos_con_score = []
         for f in spreadsheet_files:
@@ -616,6 +628,11 @@ def _leer_carpeta_drive(drive_service, sheets_service, folder_id, asunto=""):
                     score += peso
                     if len(palabra) >= 6:
                         score += 1.0 / freq
+                elif raices[palabra] != palabra and raices[palabra] in name_lower:
+                    # Match por raiz (ej: "electricas" matchea "electrico")
+                    freq = keyword_frequency.get(palabra, 1)
+                    peso = 2.0 / freq  # Peso menor que match exacto
+                    score += peso
             # Bonus por bigrams (frases de 2 palabras consecutivas)
             for bigram in bigrams:
                 if bigram in name_lower:
