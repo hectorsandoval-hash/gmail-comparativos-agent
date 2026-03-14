@@ -644,8 +644,15 @@ def _leer_carpeta_drive(drive_service, sheets_service, folder_id, asunto=""):
                 print(f"      [DRIVE] Palabras clave: {palabras_clave[:5]}")
                 print(f"      [DRIVE] Mejor match: '{top[1]['name']}' (score: {top[0]})")
 
+        # Umbral minimo de score para evitar matches incorrectos.
+        # Score < 2.0 significa que casi ninguna keyword coincide con el archivo,
+        # por lo que es mejor reportar "No especificado" que leer datos equivocados.
+        SCORE_MINIMO = 2.0
+
         # Procesar archivos en orden de relevancia (max 3 para no tardar mucho)
         for score, f in archivos_con_score[:3]:
+            if score < SCORE_MINIMO:
+                break  # Los siguientes tendran score aun menor
             mime = f.get("mimeType", "")
             datos = None
 
