@@ -124,12 +124,32 @@ OBRAS = {
     "CENEPA": ["cenepa"],
 }
 
+# Mapeo remitente -> obra por defecto (cuando el asunto no tiene obra clara)
+# Se lee de variable de entorno REMITENTE_OBRA_JSON (GitHub Secret)
+# Formato: {"email@dominio.pe": "NOMBRE_OBRA", ...}
+_remitente_obra_json = os.environ.get("REMITENTE_OBRA_JSON", "")
+REMITENTE_OBRA = json.loads(_remitente_obra_json) if _remitente_obra_json else {}
+
 
 def detectar_obra(asunto, de_email=""):
-    """Detecta la obra/proyecto a partir del asunto del correo o email del remitente."""
+    """Detecta la obra/proyecto a partir del asunto del correo o email del remitente.
+
+    Prioridad:
+    1. Palabras clave en el asunto (OBRAS)
+    2. Mapeo remitente -> obra (REMITENTE_OBRA) como fallback
+    3. "OTROS" si no se detecta nada
+    """
     texto = (asunto + " " + de_email).lower()
     for obra, keywords in OBRAS.items():
         for kw in keywords:
             if kw in texto:
                 return obra
+
+    # Fallback: buscar por email del remitente en el mapeo
+    if de_email:
+        de_email_lower = de_email.lower().strip()
+        for email_map, obra_map in REMITENTE_OBRA.items():
+            if email_map.lower() == de_email_lower:
+                return obra_map
+
     return "OTROS"

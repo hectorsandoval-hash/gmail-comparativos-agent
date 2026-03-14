@@ -53,6 +53,7 @@ jobs:
           DESTINATARIOS_SIN_FALTANTES: ${{ secrets.DESTINATARIOS_SIN_FALTANTES }}
           USUARIO_NOMBRE: ${{ secrets.USUARIO_NOMBRE }}
           EXCLUIR_REMITENTES_JSON: ${{ secrets.EXCLUIR_REMITENTES_JSON }}
+          REMITENTE_OBRA_JSON: ${{ secrets.REMITENTE_OBRA_JSON }}
         run: python main.py
 
       - name: Enviar reporte por correo
@@ -65,6 +66,7 @@ jobs:
           DESTINATARIOS_SIN_FALTANTES: ${{ secrets.DESTINATARIOS_SIN_FALTANTES }}
           USUARIO_NOMBRE: ${{ secrets.USUARIO_NOMBRE }}
           EXCLUIR_REMITENTES_JSON: ${{ secrets.EXCLUIR_REMITENTES_JSON }}
+          REMITENTE_OBRA_JSON: ${{ secrets.REMITENTE_OBRA_JSON }}
         run: python enviar_reporte.py
 
       - name: Guardar token actualizado
