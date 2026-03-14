@@ -2,8 +2,8 @@ name: Agente Comparativos Gmail
 
 on:
   schedule:
-    # 7:15 AM Peru = 12:15 UTC — analisis + envio de reporte diario
-    - cron: '15 12 * * *'
+    # 7:15 AM Peru = 12:15 UTC — lunes a sabado (1-6), no domingo
+    - cron: '15 12 * * 1-6'
 
   # Permite ejecutar manualmente desde GitHub
   workflow_dispatch:
