@@ -206,6 +206,10 @@ def _analizar_thread(service, thread_id, comparativo, mi_email):
 
         if first_from == mi_email.lower():
             estado_general = "RESPONDIDO"
+        elif alguno_tracked_respondio:
+            # El unico mensaje es de alguien tracked (ej: Carlos Ramirez envio
+            # el comparativo y nos puso en CC). Ya fue atendido por el equipo.
+            estado_general = "RESPONDIDO"
         else:
             estado_general = "PENDIENTE"
     elif ultimo_requiere_idx == -1:
